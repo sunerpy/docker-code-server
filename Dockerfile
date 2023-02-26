@@ -14,7 +14,7 @@ ENV HOME="/config"
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
-  apt-get install -y \
+  apt-get install -y procps python3 \
     git \
     jq \
     libatomic1 \
