@@ -40,7 +40,8 @@ RUN \
     /tmp/* \
     /var/lib/apt/lists/* \
     /var/tmp/*
-
+COPY requirements.txt /
+RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
 # add local files
 COPY /root /
 
