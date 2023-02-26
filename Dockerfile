@@ -14,14 +14,14 @@ ENV HOME="/config"
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
-  apt-get install -y procps python3 \
+  apt-get install -y procps python3 python3-pip \
     git \
     jq \
     libatomic1 \
     nano \
     net-tools \
     netcat \
-    sudo && \
+    sudo && ln -s /usr/bin/python3 /usr/bin/python && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
     CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
