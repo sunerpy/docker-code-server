@@ -14,7 +14,7 @@ ENV HOME="/config"
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
-  apt-get install -y procps python3 python3-pip \
+  apt-get install -y procps python3 python3-pip subversion \
     git \
     jq \
     libatomic1 \
