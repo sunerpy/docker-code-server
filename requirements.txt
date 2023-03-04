@@ -31,3 +31,4 @@ djongo
 XlsxWriter
 xlrd
 ipykernel
+yapf
