@@ -42,7 +42,8 @@ RUN \
     /var/tmp/*
 COPY requirements.txt /
 RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
-RUN sed -i '$a fs.inotify.max_user_watches=524288' /etc/sysctl.conf
+RUN sed -i '$a fs.inotify.max_user_watches=524288' /etc/sysctl.conf && \
+    su - abc -c 'git config --global user.name "sunerpy" && git config --global user.email "nkuzhangshn@gmail.com"'
 # add local files
 COPY /root /
 
