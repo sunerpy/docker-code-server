@@ -14,7 +14,7 @@ ENV HOME="/config"
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
-  apt-get install -y procps python3 python3-pip subversion \
+  apt-get install -y procps python3 python3-pip subversion inetutils-ping telnet \
     git \
     jq \
     libatomic1 \
@@ -42,6 +42,7 @@ RUN \
     /var/tmp/*
 COPY requirements.txt /
 RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
+RUN sed -i '$a fs.inotify.max_user_watches=524288' /etc/sysctl.conf
 # add local files
 COPY /root /
 

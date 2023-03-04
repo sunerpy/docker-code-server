@@ -30,3 +30,4 @@ uWSGI
 djongo
 XlsxWriter
 xlrd
+ipykernel
