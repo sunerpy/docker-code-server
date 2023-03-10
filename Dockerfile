@@ -42,7 +42,7 @@ RUN \
     /var/tmp/*
 COPY requirements.txt /
 RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
-RUN sed -i '$a fs.inotify.max_user_watches=524288' /etc/sysctl.conf && sed -i 's$a MinProtocol = TLSv1.2'
+RUN sed -i '$a fs.inotify.max_user_watches=524288' /etc/sysctl.conf && sed -i '$a MinProtocol = TLSv1.2'
 # add local files
 COPY /root /
 
