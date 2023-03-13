@@ -21,7 +21,9 @@ RUN \
     nano \
     net-tools \
     netcat \
-    sudo && ln -s /usr/bin/python3 /usr/bin/python && \
+    sudo software-properties-common && ln -s /usr/bin/python3 /usr/bin/python && \
+    echo '' |add-apt-repository ppa:rabbitvcs/ppa && apt-get install rabbitvcs-nautilus rabbitvcs-gedit rabbitvcs-cli -y && \
+    apt-get --purge remove software-properties-common -y && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
     CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -42,8 +44,8 @@ RUN \
     /var/tmp/*
 COPY requirements.txt /
 RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
-RUN sed -i '$a fs.inotify.max_user_watches=524288' /etc/sysctl.conf && sed -i '$a MinProtocol = TLSv1.2'
 # add local files
+COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
 
 # ports and volumes
