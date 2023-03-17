@@ -15,15 +15,12 @@ RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
   apt-get install -y procps python3 python3-pip subversion inetutils-ping telnet openssl \
-    git \
+    git openjdk-8-jdk \
     jq \
     libatomic1 \
-    nano \
     net-tools \
     netcat \
-    sudo software-properties-common && ln -s /usr/bin/python3 /usr/bin/python && \
-    echo '' |add-apt-repository ppa:rabbitvcs/ppa && apt-get install rabbitvcs-nautilus rabbitvcs-gedit rabbitvcs-cli -y && \
-    apt-get --purge remove software-properties-common -y && \
+    sudo && ln -s /usr/bin/python3 /usr/bin/python && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
     CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
