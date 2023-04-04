@@ -30,6 +30,7 @@ uWSGI
 djongo
 XlsxWriter
 xlrd
+openpyxl
 ipykernel
 yapf
 mypy
