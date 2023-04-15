@@ -25,7 +25,7 @@ RUN \
   if [ -z ${CODE_RELEASE+x} ]; then \
     CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
       | awk '/tag_name/{print $4;exit}' FS='[""]' | sed 's|^v||'); \
-  fi && \
+  fi && echo 'export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/dbus/system_bus_socket' >>/etc/profile && \
   mkdir -p /app/code-server && \
   curl -o \
     /tmp/code-server.tar.gz -L \
