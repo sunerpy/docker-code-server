@@ -14,7 +14,7 @@ ENV HOME="/config"
 RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
-  apt-get install -y procps python3 python3-pip subversion inetutils-ping telnet openssl libsecret-1.so.0 \
+  apt-get install -y procps python3 python3-pip subversion inetutils-ping telnet openssl libsecret-1-0 \
     git openjdk-8-jdk \
     jq \
     libatomic1 \
