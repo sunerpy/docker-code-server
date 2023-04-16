@@ -40,7 +40,7 @@ RUN \
   /var/lib/apt/lists/* \
   /var/tmp/*
 COPY requirements.txt /
-RUN mypy --list-remote-types && pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
+RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && mypy --list-remote-types
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
