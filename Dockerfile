@@ -41,8 +41,8 @@ RUN \
   /var/tmp/*
 COPY requirements.txt /
 RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
-  pip cache purge && \
-  npm install -g code-settings-sync && npm cache clean --force
+  pip cache purge
+  # npm install -g code-settings-sync && npm cache clean --force
 
 # RUN pip install types-requests types-redis --no-cache-dir
 
