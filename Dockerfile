@@ -15,7 +15,7 @@ RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
   apt-get install -y procps python3 python3-pip subversion inetutils-ping telnet openssl libsecret-1-0 \
-  git openjdk-18-jdk-headless \
+  git openjdk-18-jdk-headless nodejs npm \
   jq \
   libatomic1 \
   net-tools \
@@ -40,8 +40,11 @@ RUN \
   /var/lib/apt/lists/* \
   /var/tmp/*
 COPY requirements.txt /
-RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt
-RUN python3 -m pip install types-requests
+RUN pip install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
+  pip cache purge && \
+  npm install -g code-settings-sync && npm cache clean --force
+
+# RUN pip install types-requests types-redis --no-cache-dir
 
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf

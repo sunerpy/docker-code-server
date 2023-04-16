@@ -34,3 +34,5 @@ openpyxl
 ipykernel
 yapf
 mypy
+types-requests
+types-redis
