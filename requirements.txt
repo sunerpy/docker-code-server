@@ -1,4 +1,5 @@
 ipython
+ansible
 amqp
 asn1crypto
 bcrypt
