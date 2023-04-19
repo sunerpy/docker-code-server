@@ -29,11 +29,11 @@ urllib3
 vine
 uWSGI
 djongo
-XlsxWriter
-xlrd
 openpyxl
 ipykernel
 yapf
 mypy
 types-requests
 types-redis
+XlsxWriter
+xlrd
