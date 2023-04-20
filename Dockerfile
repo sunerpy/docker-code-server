@@ -15,7 +15,7 @@ RUN \
   echo "**** install runtime dependencies ****" && \
   apt-get update && \
   apt-get install -y procps python3 python3-pip subversion inetutils-ping telnet openssl libsecret-1-0 \
-  git openjdk-18-jdk-headless nodejs npm \
+  git openjdk-18-jdk-headless nodejs npm golang \
   jq \
   libatomic1 \
   net-tools \

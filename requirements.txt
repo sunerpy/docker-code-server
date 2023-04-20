@@ -1,5 +1,4 @@
 ipython
-ansible
 amqp
 asn1crypto
 bcrypt
@@ -37,3 +36,4 @@ types-requests
 types-redis
 XlsxWriter
 xlrd
+ansible
