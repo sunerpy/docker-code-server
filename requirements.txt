@@ -37,3 +37,4 @@ types-redis
 XlsxWriter
 xlrd
 ansible
+ansible-lint
