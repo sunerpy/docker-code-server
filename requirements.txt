@@ -36,5 +36,5 @@ types-requests
 types-redis
 XlsxWriter
 xlrd
-ansible
+ansible==2.10.7
 ansible-lint
