@@ -1,21 +1,26 @@
-FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy
+FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy AS builder
 ARG DEBIAN_FRONTEND="noninteractive"
+ENV LANG C.UTF-8
+COPY requirements.txt /
+ADD teop-sdk-python.tar.gz /teop
 # 安装依赖和编译工具
 RUN apt-get update && \
-  apt-get install -y build-essential curl libffi-dev libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget llvm libncurses5-dev xz-utils tk-dev liblzma-dev libffi-dev git && \
+  apt-get install -y build-essential curl libffi-dev libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev  llvm libncurses5-dev xz-utils tk-dev liblzma-dev libffi-dev  make  wget  libncursesw5-dev openssl zlib1g \
+xz-utils tk-dev libffi-dev liblzma-dev  && \
   rm -rf /var/lib/apt/lists/*
 
 # 下载 Python 3.11.3 源码并解压
-RUN curl -O https://www.python.org/ftp/python/3.11.3/Python-3.11.3.tgz && \
-  tar xzf Python-3.11.3.tgz && curl -O https://www.python.org/ftp/python/3.6.5/Python-3.6.5.tgz && tar xzf Python-3.6.5.tgz
+RUN curl -O http://webserver.onethinker.top:33080/Python-3.11.3.tgz && \
+  tar xf Python-3.11.3.tgz && curl -O http://webserver.onethinker.top:33080/Python-3.6.5.tar.xz && tar xf Python-3.6.5.tar.xz
 
 # 编译和安装 Python 3.11.3
+# RUN cd /Python-3.6.5 &&  ./configure --prefix=/usr/local/python-3.6.5 --enable-optimizations --enable-shared && \
+#   make  && \
+#   make install
 RUN cd /Python-3.11.3 &&  ./configure --prefix=/usr/local/python-3.11.3 --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
-  make altinstall
-RUN cd /Python-3.6.5 &&  ./configure --prefix=/usr/local/python-3.6.5 --enable-optimizations --enable-shared && \
-  make -j $(nproc) && \
-  make altinstall
+  make altinstall && pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
+  cd /teop/teop-sdk-python && python3 setup.py install && pip cache purge
 
 # 第二阶段，构建 Python 应用镜像
 FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy
@@ -31,7 +36,7 @@ ENV HOME="/config"
 COPY --from=builder /usr/local/python-3.11.3 /usr/local/python-3.11.3
 
 # 拷贝 Python 3.6.5 环境
-COPY --from=builder /usr/local/python-3.6.5 /usr/local/python3.6.5
+# COPY --from=builder /usr/local/python-3.6.5 /usr/local/python3.6.5
 
 # 更新 apt 并安装应用所需依赖
 RUN apt-get update && \
@@ -63,9 +68,9 @@ RUN apt-get update && \
   /tmp/* \
   /var/lib/apt/lists/* \
   /var/tmp/*
-COPY requirements.txt /
-RUN pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
-  pip cache purge
+# COPY requirements.txt /
+# RUN pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
+#   pip cache purge
 # npm install -g code-settings-sync && npm cache clean --force
 
 # RUN pip install types-requests types-redis --no-cache-dir
