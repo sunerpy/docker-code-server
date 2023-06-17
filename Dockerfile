@@ -8,8 +8,10 @@ xz-utils tk-dev libffi-dev liblzma-dev  && \
   rm -rf /var/lib/apt/lists/*
 
 # 下载 Python 3.11.3 源码并解压
-RUN curl -O http://webserver.onethinker.top:33080/Python-3.11.3.tgz && \
-  tar xf Python-3.11.3.tgz && curl -O http://webserver.onethinker.top:33080/Python-3.6.5.tar.xz && tar xf Python-3.6.5.tar.xz
+# RUN curl -O http://webserver.onethinker.top:33080/Python-3.11.3.tgz && \
+#   tar xf Python-3.11.3.tgz && curl -O http://webserver.onethinker.top:33080/Python-3.6.5.tar.xz && tar xf Python-3.6.5.tar.xz
+RUN curl -O https://www.python.org/ftp/python/3.11.3/Python-3.11.3.tgz && \
+  tar xf Python-3.11.3.tgz
 
 # 编译和安装 Python 3.11.3
 # RUN cd /Python-3.6.5 &&  ./configure --prefix=/usr/local/python-3.6.5 --enable-optimizations --enable-shared && \
