@@ -4,7 +4,7 @@ ENV LANG C.UTF-8
 # 安装依赖和编译工具
 RUN apt-get update && \
   apt-get install -y build-essential curl libffi-dev libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev  llvm libncurses5-dev xz-utils tk-dev liblzma-dev libffi-dev  make  wget  libncursesw5-dev openssl zlib1g \
-xz-utils tk-dev libffi-dev liblzma-dev  && \
+  xz-utils tk-dev libffi-dev liblzma-dev  && \
   rm -rf /var/lib/apt/lists/*
 
 # 下载 Python 3.11.3 源码并解压
@@ -34,6 +34,7 @@ ARG PYTHONNUM='3.11'
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config"
+ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages"
 # 拷贝 Python 3.11.3 环境
 COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
 ADD teop-sdk-python.tar.gz /teop
@@ -64,12 +65,13 @@ RUN apt-get update && \
   python3-pkg-resources python3-minimal libpython3.10-stdlib libpython3.10-minimal libpython3-stdlib -y
 COPY requirements.txt /
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-echo "export PATH=/usr/local/${PYTHONVER}/bin:/usr/local/python-3.6.5/bin:\$PATH" >> /etc/profile && \
-echo "export PYTHONPATH=/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages" >> /etc/profile && source /etc/profile \
-ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
-ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
-pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
-  cd /teop/teop-sdk-python && python3 setup.py install && /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} cache purge
+  echo "export PATH=/usr/local/${PYTHONVER}/bin:/usr/local/python-3.6.5/bin:\$PATH" >> /etc/profile && \
+  echo "export PYTHONPATH=/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages" >> /etc/profile && \
+  ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
+  ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
+  pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
+  cd /teop/teop-sdk-python && export PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages" &&\
+  python3 setup.py install && /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} cache purge
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
