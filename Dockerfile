@@ -1,8 +1,6 @@
 FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy AS builder
 ARG DEBIAN_FRONTEND="noninteractive"
 ENV LANG C.UTF-8
-COPY requirements.txt /
-ADD teop-sdk-python.tar.gz /teop
 # 安装依赖和编译工具
 RUN apt-get update && \
   apt-get install -y build-essential curl libffi-dev libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev  llvm libncurses5-dev xz-utils tk-dev liblzma-dev libffi-dev  make  wget  libncursesw5-dev openssl zlib1g \
@@ -19,9 +17,9 @@ RUN curl -O http://webserver.onethinker.top:33080/Python-3.11.3.tgz && \
 #   make install
 RUN cd /Python-3.11.3 &&  ./configure --prefix=/usr/local/python-3.11.3 --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
-  make altinstall && pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
-  cd /teop/teop-sdk-python && python3 setup.py install && pip cache purge
-
+  make altinstall
+# RUN /usr/local/python-3.11.3/bin/pip3.11 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
+#   cd /teop/teop-sdk-python && /usr/local/python-3.11.3/bin/python3.11 setup.py install && /usr/local/python-3.11.3/bin/pip3.11 cache purge
 # 第二阶段，构建 Python 应用镜像
 FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy
 ARG DEBIAN_FRONTEND="noninteractive"
@@ -29,27 +27,20 @@ ARG DEBIAN_FRONTEND="noninteractive"
 ARG BUILD_DATE
 ARG VERSION
 ARG CODE_RELEASE
+ARG PYTHONVER='python-3.11.3'
+ARG PYTHONNUM='3.11'
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config"
 # 拷贝 Python 3.11.3 环境
-COPY --from=builder /usr/local/python-3.11.3 /usr/local/python-3.11.3
-
-# 拷贝 Python 3.6.5 环境
-# COPY --from=builder /usr/local/python-3.6.5 /usr/local/python3.6.5
+COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
+ADD teop-sdk-python.tar.gz /teop
 
 # 更新 apt 并安装应用所需依赖
 RUN apt-get update && \
-  apt-get install -y libffi7 libssl1.1 zlib1g libbz2-1.0 libreadline8  libncursesw6 liblzma5 \
+  apt-get install -y libffi7 zlib1g libbz2-1.0 libreadline8  libncursesw6 liblzma5 \
   procps  subversion inetutils-ping telnet openssl libsecret-1-0 \
-  git openjdk-18-jdk-headless nodejs npm golang \
-  jq \
-  libatomic1 \
-  net-tools \
-  netcat \
-  sudo && ln -s /usr/local/python-3.11.3/bin/python3.11 /usr/bin/python3 && \
-  ln -s /usr/local/python-3.11.3/bin/pip3.11 /usr/bin/pip3 &&  ln -s /usr/bin/python3 /usr/bin/python && \
-  echo 'export PATH=/usr/local/python-3.11.3/bin:/usr/local/python-3.6.5/bin:$PATH' >> /etc/profile && \
+  git openjdk-18-jdk-headless nodejs npm golang jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends&& \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
   CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -67,14 +58,16 @@ RUN apt-get update && \
   /config/* \
   /tmp/* \
   /var/lib/apt/lists/* \
-  /var/tmp/*
-# COPY requirements.txt /
-# RUN pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
-#   pip cache purge
-# npm install -g code-settings-sync && npm cache clean --force
-
-# RUN pip install types-requests types-redis --no-cache-dir
-
+  /var/tmp/* && apt remove python3 python3.10 python3.10-minimal \
+  python3-pkg-resources python3-minimal libpython3.10-stdlib libpython3.10-minimal libpython3-stdlib -y
+COPY requirements.txt /
+RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
+echo "export PATH=/usr/local/${PYTHONVER}/bin:/usr/local/python-3.6.5/bin:\$PATH" >> /etc/profile && \
+echo "export PYTHONPATH=/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages" >> /etc/profile && source /etc/profile \
+ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
+ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
+pip3 install -r /requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --no-cache-dir && rm -f /requirements.txt && \
+  cd /teop/teop-sdk-python && python3 setup.py install && /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} cache purge
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
