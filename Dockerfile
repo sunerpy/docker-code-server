@@ -71,7 +71,7 @@ RUN curl -O https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.
   make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
   cd / && git clone "https://github.com/caddyserver/caddy.git" && \
   curl -O https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local && export PATH="/usr/local/go/bin:$PATH" && \
-  go version && \
+  go version && rm -rf /${GOFILE} && \
   cd caddy/cmd/caddy/ && go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
