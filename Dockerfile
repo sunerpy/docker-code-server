@@ -67,7 +67,9 @@ RUN apt-get update && \
 RUN curl -O https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
   tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
-  make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz
+  make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
+  cd / && git clone "https://github.com/caddyserver/caddy.git" && \
+  cd caddy/cmd/caddy/ && go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
