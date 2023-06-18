@@ -44,7 +44,8 @@ RUN apt-get update && \
   apt-get install -y libffi7 make zlib1g zlib1g-dev libbz2-1.0 libsqlite3-dev libreadline8  libncursesw6 liblzma5 \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
-  git openjdk-18-jdk-headless nodejs golang jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends&& \
+  git openjdk-18-jdk-headless nodejs golang jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends && \
+  go install -v golang.org/x/tools/gopls@latest && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
   CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -81,7 +82,7 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
 # RUN cd /teop/teop-sdk-python && export PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages" &&\
-  # python3 setup.py install && /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} cache purge
+# python3 setup.py install && /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} cache purge
 
 # ports and volumes
 EXPOSE 8443
