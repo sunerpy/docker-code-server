@@ -33,6 +33,7 @@ ARG PYTHONNUM='3.11'
 ARG PYTHONVERALL="3.11.3"
 ARG PYTHONVER="python-3.11.3"
 ARG PYTHONFILENAME='Python-3.11.3'
+ARG GOFILE='go1.20.5.src.tar.gz'
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config"
@@ -44,7 +45,7 @@ RUN apt-get update && \
   apt-get install -y libffi7 make zlib1g zlib1g-dev libbz2-1.0 libsqlite3-dev libreadline8  libncursesw6 liblzma5 \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
-  git openjdk-18-jdk-headless nodejs golang jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends && \
+  git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends && \
   go install -v golang.org/x/tools/gopls@latest && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
@@ -69,11 +70,14 @@ RUN curl -O https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.
   make -j $(nproc) && \
   make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
   cd / && git clone "https://github.com/caddyserver/caddy.git" && \
+  curl -O https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local && export PATH="/usr/local/go/bin:$PATH" && \
+  go version && \
   cd caddy/cmd/caddy/ && go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:\$PATH\"" >> /etc/profile && \
+  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH\"" >> /etc/profile && \
+  echo 'export GOPATH=$HOME/go' >> /etc/profile && \
   ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   python3 -m pip install --upgrade pip && \
