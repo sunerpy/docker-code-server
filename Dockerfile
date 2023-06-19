@@ -37,6 +37,7 @@ ARG GOFILE='go1.20.5.src.tar.gz'
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config"
+USER root
 # ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages"
 # 拷贝 Python 3.11.3 环境
 # COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
@@ -45,7 +46,17 @@ RUN apt-get update && \
   apt-get install -y libffi7 make zlib1g zlib1g-dev libbz2-1.0 libsqlite3-dev libreadline8  libncursesw6 liblzma5 \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
-  git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends && \
+  debian-keyring debian-archive-keyring apt-transport-https \
+  git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential golang --no-install-recommends && \
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
+  curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
+  apt-get update && apt-get install -y caddy && \
+  cd / && curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
+  tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
+  make -j $(nproc) && \
+  make altinstall && cd / && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
+  go install -v golang.org/x/tools/gopls@latest && \
+  apt-get remove -y debian-keyring debian-archive-keyring apt-transport-https && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
   CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -64,20 +75,10 @@ RUN apt-get update && \
   /tmp/* \
   /var/lib/apt/lists/* \
   /var/tmp/* 
-RUN curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
-  tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
-  make -j $(nproc) && \
-  make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
-  cd / && git clone "https://github.com/caddyserver/caddy.git" && \
-  curl -LO https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local/ && export PATH="/usr/local/go/bin:$PATH" && \
-  /usr/local/go/bin/go version && rm -rf /${GOFILE} && \
-  cd caddy/cmd/caddy/ && /usr/local/go/bin/go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy && \
-  go install -v golang.org/x/tools/gopls@latest
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH\"" >> /etc/profile && \
-  echo 'export GOPATH=$HOME/go' >> /etc/profile && \
+  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:\$PATH\"" >> /etc/profile && \
   ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   python3 -m pip install --upgrade pip && \
@@ -87,8 +88,7 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
-# RUN cd /teop/teop-sdk-python && export PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages" &&\
-# python3 setup.py install && /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} cache purge
 
 # ports and volumes
+USER nobody
 EXPOSE 8443
