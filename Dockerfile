@@ -37,7 +37,6 @@ ARG GOFILE='go1.20.5.src.tar.gz'
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config"
-USER root
 # ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages"
 # 拷贝 Python 3.11.3 环境
 # COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
@@ -90,5 +89,4 @@ COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
 
 # ports and volumes
-USER nobody
 EXPOSE 8443
