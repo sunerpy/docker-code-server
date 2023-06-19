@@ -70,9 +70,9 @@ RUN curl -O https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.
   make -j $(nproc) && \
   make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
   cd / && git clone "https://github.com/caddyserver/caddy.git" && \
-  curl -O https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local && export PATH="/usr/local/go/bin:$PATH" && \
-  go version && rm -rf /${GOFILE} && \
-  cd caddy/cmd/caddy/ && go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy
+  curl -O https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local/ && export PATH="/usr/local/go/bin:$PATH" && \
+  /usr/local/go/bin/go version && rm -rf /${GOFILE} && \
+  cd caddy/cmd/caddy/ && /usr/local/go/bin/go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
