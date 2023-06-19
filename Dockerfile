@@ -64,12 +64,12 @@ RUN apt-get update && \
   /tmp/* \
   /var/lib/apt/lists/* \
   /var/tmp/* 
-RUN curl -O https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
+RUN curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
   tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
   make altinstall && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
   cd / && git clone "https://github.com/caddyserver/caddy.git" && \
-  curl -O https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local/ && export PATH="/usr/local/go/bin:$PATH" && \
+  curl -LO https://go.dev/dl/${GOFILE} && tar xf ${GOFILE} && mv go /usr/local/ && export PATH="/usr/local/go/bin:$PATH" && \
   /usr/local/go/bin/go version && rm -rf /${GOFILE} && \
   cd caddy/cmd/caddy/ && /usr/local/go/bin/go build && cp caddy /usr/local/bin && cd / && rm -rf /caddy && \
   go install -v golang.org/x/tools/gopls@latest
