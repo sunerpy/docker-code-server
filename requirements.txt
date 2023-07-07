@@ -38,3 +38,10 @@ XlsxWriter
 xlrd
 ansible==8.0.0
 ansible-lint
+
+#0707 drf
+djangorestframework
+markdown
+django-filter
+django-rest-swagger
+apscheduler
