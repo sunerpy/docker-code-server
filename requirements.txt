@@ -41,7 +41,14 @@ ansible-lint
 
 #0707 drf
 djangorestframework
+djangorestframework-camel-case
+djangorestframework-recursive
 markdown
 django-filter
-django-rest-swagger
+drf-yasg
+user_agents
+django-cors-headers
+django-oauth-toolkit
 apscheduler
+
+Pillow
