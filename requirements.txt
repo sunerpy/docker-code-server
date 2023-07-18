@@ -38,8 +38,6 @@ XlsxWriter
 xlrd
 ansible==8.0.0
 ansible-lint
-
-#0707 drf
 djangorestframework
 djangorestframework-camel-case
 djangorestframework-recursive
@@ -50,7 +48,6 @@ user_agents
 django-cors-headers
 django-oauth-toolkit
 apscheduler
-
 Pillow
 celery
 asyncio
