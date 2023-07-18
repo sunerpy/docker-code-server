@@ -52,3 +52,6 @@ django-oauth-toolkit
 apscheduler
 
 Pillow
+celery
+asyncio
+aiohttp
