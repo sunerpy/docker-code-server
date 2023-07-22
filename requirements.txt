@@ -51,9 +51,11 @@ apscheduler
 Pillow
 celery
 asyncio
+asyncssh
 aiohttp
 celery[librabbitmq]
 celery[redis]
 
 django-apscheduler
 py_eureka_client
+
