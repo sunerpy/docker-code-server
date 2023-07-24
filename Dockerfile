@@ -49,7 +49,7 @@ RUN apt-get update && \
   git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential golang --no-install-recommends && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
-  apt-get update && apt-get install -y caddy && \
+  apt-get update && apt-get install -y caddy && go install -v golang.org/x/tools/gopls@latest &&\
   cd / && curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
   tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
