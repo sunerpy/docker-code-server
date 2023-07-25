@@ -41,9 +41,10 @@ ENV HOME="/config"
 # 拷贝 Python 3.11.3 环境
 # COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
 # apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C &&
+# gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C
 # 更新 apt 并安装应用所需依赖
 RUN rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && \ 
-  apt-get update && \
+  apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && apt-get update && \
   apt-get install -y libffi7 make zlib1g zlib1g-dev libbz2-1.0 libsqlite3-dev libreadline8  libncursesw6 liblzma5 \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
