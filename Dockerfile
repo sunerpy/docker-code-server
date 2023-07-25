@@ -40,21 +40,16 @@ ENV HOME="/config"
 # ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages"
 # 拷贝 Python 3.11.3 环境
 # COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
-# apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C &&
-# gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C
 # 更新 apt 并安装应用所需依赖
-RUN rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && \ 
-  apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && dpkg-reconfigure gnupg && \
-  gpgconf --kill dirmngr && gpgconf --launch dirmngr && \
-  apt-get update && \
+RUN apt-get update && \
   apt-get install -y libffi7 make zlib1g zlib1g-dev libbz2-1.0 libsqlite3-dev libreadline8  libncursesw6 liblzma5 \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
-  debian-keyring debian-archive-keyring apt-transport-https openssh-client maven \
+  debian-keyring debian-archive-keyring apt-transport-https openssh-client \
   git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential golang --no-install-recommends && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
-  apt-get update && apt-get install -y caddy && go install -v golang.org/x/tools/gopls@latest &&\
+  apt-get update && apt-get install -y caddy && \
   cd / && curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
   tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
