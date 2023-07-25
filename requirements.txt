@@ -53,6 +53,8 @@ celery
 asyncio
 asyncssh
 aiohttp
+aiormq
+aioamqp
 celery[librabbitmq]
 celery[redis]
 
