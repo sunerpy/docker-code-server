@@ -60,4 +60,4 @@ celery[redis]
 
 django-apscheduler
 py_eureka_client
-
+django-ratelimit
