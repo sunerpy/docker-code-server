@@ -36,7 +36,8 @@ types-requests
 types-redis
 XlsxWriter
 xlrd
-ansible==8.0.0
+ansible-core==2.14.8
+ansible==7.7.0
 ansible-lint
 djangorestframework
 djangorestframework-camel-case
@@ -61,3 +62,4 @@ celery[redis]
 django-apscheduler
 py_eureka_client
 django-ratelimit
+ansible-runner
