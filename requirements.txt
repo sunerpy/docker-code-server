@@ -63,3 +63,7 @@ django-apscheduler
 py_eureka_client
 django-ratelimit
 ansible-runner
+arrow
+aiohttp-jinja2
+aiofiles
+aioredis
