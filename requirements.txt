@@ -87,7 +87,7 @@ pre-commit
 pylint
 ruff
 types-redis
-juypter
+jupyter
 tables
 pandas
 # for AI ---------------END-----------------------------------
