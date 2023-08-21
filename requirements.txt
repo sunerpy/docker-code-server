@@ -27,7 +27,6 @@ urllib3
 vine
 uWSGI
 djongo
-openpyxl
 ipykernel
 yapf
 XlsxWriter
@@ -90,4 +89,9 @@ types-redis
 jupyter
 tables
 pandas
+openpyxl
 # for AI ---------------END-----------------------------------
+
+# deep learning
+tensorflow
+matplotlib

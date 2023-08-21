@@ -51,15 +51,14 @@ RUN rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubu
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
   debian-keyring debian-archive-keyring apt-transport-https openssh-client maven \
-  git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential golang --no-install-recommends && \
+  git openjdk-18-jdk-headless nodejs jq libatomic1 net-tools netcat sudo build-essential --no-install-recommends && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
-  apt-get update && apt-get install -y caddy && go install -v golang.org/x/tools/gopls@latest &&\
+  apt-get update && apt-get install -y caddy && \
   cd / && curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
   tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
   make altinstall && cd / && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
-  go install -v golang.org/x/tools/gopls@latest && \
   apt-get remove -y debian-keyring debian-archive-keyring apt-transport-https && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
@@ -82,13 +81,18 @@ RUN rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubu
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:\$PATH\"" >> /etc/profile && \
+  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:/config/go/bin:\$PATH\"" >> /etc/profile && \
   ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   python3 -m pip install --upgrade pip && \
-  pip3 install -r /requirements.txt --no-cache-dir && \
-  cd /teop/teop-sdk-python && python3 setup.py install
-
+  pip3 install -r /requirements.txt --no-cache-dir --upgrade && \
+  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath
+ENV GOPATH="/config/gopath"
+RUN cd / && git clone https://go.googlesource.com/go goroot && cd goroot && git checkout go1.21.0 && \
+    cd src && ./make.bash && rm -rf /goroot && go install golang.org/x/tools/gopls@latest && \
+    go install -v golang.org/x/tools/cmd/goimports@latest && go install -v github.com/stamblerre/gocode@latest && \
+    go install -v github.com/rogpeppe/godef@latest && go install -v github.com/go-delve/delve/cmd/dlv@latest
+ENV GOPROXY="https://goproxy.cn,direct"
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
