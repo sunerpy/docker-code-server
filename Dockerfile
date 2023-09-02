@@ -33,7 +33,10 @@ ARG PYTHONNUM='3.11'
 ARG PYTHONVERALL="3.11.3"
 ARG PYTHONVER="python-3.11.3"
 ARG PYTHONFILENAME='Python-3.11.3'
-ARG GOFILE='go1.20.5.src.tar.gz'
+ARG GOFILE="go1.21.0.linux-amd64.tar.gz"
+ARG NODE_VERSION="v18.17.1"
+ARG NODE_DISTRO="linux-x64"
+ARG NODEFILE="node-${NODE_VERSION}-${NODE_DISTRO}.tar.xz" 
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config"
@@ -43,7 +46,7 @@ ENV HOME="/config"
 # apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C &&
 # gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C
 # 更新 apt 并安装应用所需依赖
-RUN rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && \ 
+RUN apt-get update && apt-get install -y dirmngr && rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && \ 
   apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 871920D1991BC93C && dpkg-reconfigure gnupg && \
   gpgconf --kill dirmngr && gpgconf --launch dirmngr && \
   apt-get update && \
@@ -81,18 +84,19 @@ RUN rm -rf /etc/apt/trusted.gpg.d/* && gpg --recv-keys --keyserver keyserver.ubu
 COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:/config/go/bin:\$PATH\"" >> /etc/profile && \
+  echo "export PATH=\"/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH\"" >> /etc/profile && \
   ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   python3 -m pip install --upgrade pip && \
   pip3 install -r /requirements.txt --no-cache-dir --upgrade && \
-  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath
-ENV GOPATH="/config/gopath"
-RUN cd / && git clone https://go.googlesource.com/go goroot && cd goroot && git checkout go1.21.0 && \
-    cd src && ./make.bash && rm -rf /goroot && go install golang.org/x/tools/gopls@latest && \
-    go install -v golang.org/x/tools/cmd/goimports@latest && go install -v github.com/stamblerre/gocode@latest && \
-    go install -v github.com/rogpeppe/godef@latest && go install -v github.com/go-delve/delve/cmd/dlv@latest
-ENV GOPROXY="https://goproxy.cn,direct"
+  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go
+ADD ${GOFILE} /usr/local
+ENV GOPATH="/config/gopath"  GOPROXY="https://goproxy.cn,direct"
+RUN export PATH=$PATH:/usr/local/go/bin:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin  && export GOPATH=/config/gopath && ls /config/gopath && sleep 3 && \
+  /usr/local/go/bin/go install golang.org/x/tools/gopls@latest && \
+  /usr/local/go/bin/go install -v golang.org/x/tools/cmd/goimports@latest && /usr/local/go/bin/go install -v github.com/stamblerre/gocode@latest && \
+  /usr/local/go/bin/go install -v github.com/rogpeppe/godef@latest && /usr/local/go/bin/go install -v github.com/go-delve/delve/cmd/dlv@latest && \
+  mkdir -p /usr/local/lib/nodejs &&  tar xf ${NODEFILE} -C /usr/local/lib/nodejs 
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
