@@ -72,7 +72,6 @@ pytest-dotenv
 pytest-asyncio
 
 # third-party (libraries)
-rake_nltk
 ipython
 
 # linting stubs
@@ -81,17 +80,11 @@ types-setuptools
 
 # linting
 black[jupyter]
-mypy
-pre-commit
 pylint
-ruff
 types-redis
 jupyter
-tables
-pandas
 openpyxl
-# for AI ---------------END-----------------------------------
 
-# deep learning
-tensorflow
-matplotlib
+
+# pip install numpy --target /config/pylibs/python3.11.3/site-packages
+# export PYTHONPATH=/config/pylibs/python3.11.3/site-packages:$PYTHONPATH

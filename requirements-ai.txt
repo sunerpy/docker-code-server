@@ -1,0 +1,17 @@
+# linting
+black[jupyter]
+mypy
+pre-commit
+pylint
+ruff
+types-redis
+jupyter
+tables
+pandas
+openpyxl
+# for AI ---------------END-----------------------------------
+
+# deep learning
+tensorflow
+matplotlib
+rake_nltk
