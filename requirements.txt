@@ -1,3 +1,4 @@
+gssapi
 amqp
 asn1crypto
 bcrypt

@@ -19,7 +19,7 @@ ENV LANG C.UTF-8
 # 安装依赖和编译工具
 RUN apt-get update && \
   apt-get install -y build-essential curl libffi-dev libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev  llvm libncurses5-dev xz-utils tk-dev liblzma-dev libffi-dev  make  wget  libncursesw5-dev openssl zlib1g \
-  xz-utils tk-dev libffi-dev liblzma-dev  && \
+  xz-utils tk-dev libffi-dev liblzma-dev libkrb5-dev && \
   rm -rf /var/lib/apt/lists/* && cd / && curl -LO https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tgz && \
   tar xf ${PYTHONFILENAME}.tgz && cd /${PYTHONFILENAME} &&  ./configure --prefix=/usr/local/${PYTHONVER} --enable-optimizations --enable-shared && \
   make -j $(nproc) && \
