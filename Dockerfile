@@ -94,7 +94,7 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   # python3 -m pip install --upgrade pip && \
   # pip3 install -r /requirements.txt --no-cache-dir --upgrade -i https://mirrors.aliyun.com/pypi/simple/ && \
-  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go && pip3 install ansible==7.7.0 --no-cache-dir && pip3 install ansible-lint==6.18.0
+  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go && pip3 install ansible==5.10.0 --no-cache-dir && pip3 install ansible-lint && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
 ADD ${GOFILE} /usr/local
 ADD ${NODEFILE} /usr/local/lib/nodejs
 # RUN export PATH=$PATH:/usr/local/go/bin && export GOPATH=/config/gopath
