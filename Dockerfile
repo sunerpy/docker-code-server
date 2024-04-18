@@ -58,6 +58,7 @@ RUN apt-get update && \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
   debian-keyring debian-archive-keyring apt-transport-https openssh-client maven \
+  vim bash-completion groff less unzip rsync \
   git openjdk-18-jdk-headless jq libatomic1 net-tools netcat sudo --no-install-recommends && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
@@ -78,6 +79,8 @@ RUN apt-get update && \
   "https://github.com/coder/code-server/releases/download/v${CODE_RELEASE}/code-server-${CODE_RELEASE}-linux-amd64.tar.gz" && \
   tar xf /tmp/code-server.tar.gz -C \
   /app/code-server --strip-components=1 && \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+  unzip awscliv2.zip && ./aws/install && \
   echo "**** clean up ****" && \
   apt-get clean && \
   rm -rf \
