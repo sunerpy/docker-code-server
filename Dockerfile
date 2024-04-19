@@ -55,6 +55,7 @@ COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
 # 更新 apt 并安装应用所需依赖
 RUN apt-get update && \
   echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
+  echo 'abc ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers && \
   apt-get install -y libreadline8  libncursesw6 liblzma5 build-essential \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
