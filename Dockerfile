@@ -53,15 +53,17 @@ ENV HOME="/config" PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/si
 # 拷贝 Python 3.11.3 环境
 COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
 # 更新 apt 并安装应用所需依赖
-RUN apt-get update && \
-  echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
+RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   echo 'abc ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers && \
+  sed -i 's#http://archive.ubuntu.com/ubuntu/#http://mirrors.aliyun.com/ubuntu/#g' /etc/apt/sources.list && \
+  apt-get update && \
   apt-get install -y libreadline8  libncursesw6 liblzma5 build-essential \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
   debian-keyring debian-archive-keyring apt-transport-https openssh-client maven \
   vim bash-completion groff less unzip rsync \
-  git openjdk-18-jdk-headless jq libatomic1 net-tools netcat sudo --no-install-recommends && \
+  openjdk-18-jdk-headless \
+  git jq libatomic1 net-tools netcat sudo amazon-ecr-credential-helper --no-install-recommends && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list && \
   apt-get update && apt-get install -y caddy && \
@@ -70,6 +72,7 @@ RUN apt-get update && \
   # make -j $(nproc) && \
   # make altinstall && cd / && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz && \
   apt-get remove -y debian-keyring debian-archive-keyring apt-transport-https && \
+  sed -i '/root.*ALL/aabc ALL=(ALL:ALL) NOPASSWD: ALL' /etc/sudoers && \
   echo "**** install code-server ****" && \
   if [ -z ${CODE_RELEASE+x} ]; then \
   CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
@@ -99,7 +102,7 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   # python3 -m pip install --upgrade pip && \
   # pip3 install -r /requirements.txt --no-cache-dir --upgrade -i https://mirrors.aliyun.com/pypi/simple/ && \
-  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go && pip3 install ansible==5.10.0 --no-cache-dir && pip3 install ansible-lint && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
+  cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go && pip3 install ansible==5.10.0 --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/  && pip3 install ansible-lint -i https://mirrors.aliyun.com/pypi/simple/  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
 ADD ${GOFILE} /usr/local
 ADD ${NODEFILE} /usr/local/lib/nodejs
 # RUN export PATH=$PATH:/usr/local/go/bin && export GOPATH=/config/gopath
