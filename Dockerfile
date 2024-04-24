@@ -1,4 +1,4 @@
-FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy AS builder
+FROM 107255705363.dkr.ecr.cn-northwest-1.amazonaws.com.cn/linuxserver/baseimage-ubuntu:jammy AS builder
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG BUILD_DATE
@@ -32,7 +32,7 @@ RUN apt-get update && \
 #   tar xf Python-3.11.3.tgz
 
 # 第二阶段，构建 Python 应用镜像
-FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy
+FROM 107255705363.dkr.ecr.cn-northwest-1.amazonaws.com.cn/linuxserver/baseimage-ubuntu:jammy
 ARG DEBIAN_FRONTEND="noninteractive"
 # set version label
 ARG BUILD_DATE
@@ -54,13 +54,13 @@ ENV HOME="/config" PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/si
 COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
 # 更新 apt 并安装应用所需依赖
 RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
-  echo 'abc ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers && \
+  # echo 'abc ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers && \
   sed -i 's#http://archive.ubuntu.com/ubuntu/#http://mirrors.aliyun.com/ubuntu/#g' /etc/apt/sources.list && \
   apt-get update && \
   apt-get install -y libreadline8  libncursesw6 liblzma5 build-essential \
   procps  subversion inetutils-ping telnet openssl libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
-  debian-keyring debian-archive-keyring apt-transport-https openssh-client maven \
+  debian-keyring debian-archive-keyring apt-transport-https openssh-client maven krb5-config \
   vim bash-completion groff less unzip rsync \
   openjdk-18-jdk-headless \
   git jq libatomic1 net-tools netcat sudo amazon-ecr-credential-helper --no-install-recommends && \
@@ -85,7 +85,7 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   tar xf /tmp/code-server.tar.gz -C \
   /app/code-server --strip-components=1 && \
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-  unzip awscliv2.zip && ./aws/install && \
+  unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && rm -rf /aws && \
   echo "**** clean up ****" && \
   apt-get clean && \
   rm -rf \
@@ -106,9 +106,9 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
 ADD ${GOFILE} /usr/local
 ADD ${NODEFILE} /usr/local/lib/nodejs
 # RUN export PATH=$PATH:/usr/local/go/bin && export GOPATH=/config/gopath
-  # /usr/local/go/bin/go install golang.org/x/tools/gopls@latest && \
-  # /usr/local/go/bin/go install -v golang.org/x/tools/cmd/goimports@latest && /usr/local/go/bin/go install -v github.com/stamblerre/gocode@latest && \
-  # /usr/local/go/bin/go install -v github.com/rogpeppe/godef@latest && /usr/local/go/bin/go install -v github.com/go-delve/delve/cmd/dlv@latest
+# /usr/local/go/bin/go install golang.org/x/tools/gopls@latest && \
+# /usr/local/go/bin/go install -v golang.org/x/tools/cmd/goimports@latest && /usr/local/go/bin/go install -v github.com/stamblerre/gocode@latest && \
+# /usr/local/go/bin/go install -v github.com/rogpeppe/godef@latest && /usr/local/go/bin/go install -v github.com/go-delve/delve/cmd/dlv@latest
 # add local files
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
