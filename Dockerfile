@@ -5,10 +5,10 @@ ARG BUILD_DATE
 ARG VERSION
 ARG CODE_RELEASE
 ARG PYTHONNUM='3.11'
-ARG PYTHONVERALL="3.11.3"
-ARG PYTHONVER="python-3.11.3"
-ARG PYTHONFILENAME='Python-3.11.3'
-ARG PYLIBS="/config/pylibs/python3.11.3"
+ARG PYTHONVERALL="3.11.7"
+ARG PYTHONVER="python-3.11.7"
+ARG PYTHONFILENAME='Python-3.11.7'
+ARG PYLIBS="/config/pylibs/python3.11.7"
 ARG GOFILE="go1.21.0.linux-amd64.tar.xz"
 ARG NODE_VERSION="v18.17.1"
 ARG NODE_DISTRO="linux-x64"
@@ -25,11 +25,11 @@ RUN apt-get update && \
   make -j $(nproc) && \
   make altinstall && cd / && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz
 
-# # 下载 Python 3.11.3 源码并解压
-# # RUN curl -O http://webserver.onethinker.top:33080/Python-3.11.3.tgz && \
-# #   tar xf Python-3.11.3.tgz && curl -O http://webserver.onethinker.top:33080/Python-3.6.5.tar.xz && tar xf Python-3.6.5.tar.xz
-# RUN curl -O https://www.python.org/ftp/python/3.11.3/Python-3.11.3.tgz && \
-#   tar xf Python-3.11.3.tgz
+# # 下载 Python 3.11.7 源码并解压
+# # RUN curl -O http://webserver.onethinker.top:33080/Python-3.11.7.tgz && \
+# #   tar xf Python-3.11.7.tgz && curl -O http://webserver.onethinker.top:33080/Python-3.6.5.tar.xz && tar xf Python-3.6.5.tar.xz
+# RUN curl -O https://www.python.org/ftp/python/3.11.7/Python-3.11.7.tgz && \
+#   tar xf Python-3.11.7.tgz
 
 # 第二阶段，构建 Python 应用镜像
 FROM 107255705363.dkr.ecr.cn-northwest-1.amazonaws.com.cn/linuxserver/baseimage-ubuntu:jammy
@@ -39,10 +39,10 @@ ARG BUILD_DATE
 ARG VERSION
 ARG CODE_RELEASE
 ARG PYTHONNUM='3.11'
-ARG PYTHONVERALL="3.11.3"
-ARG PYTHONVER="python-3.11.3"
-ARG PYTHONFILENAME='Python-3.11.3'
-ARG PYLIBS="/config/pylibs/python3.11.3"
+ARG PYTHONVERALL="3.11.7"
+ARG PYTHONVER="python-3.11.7"
+ARG PYTHONFILENAME='Python-3.11.7'
+ARG PYLIBS="/config/pylibs/python3.11.7"
 ARG GOFILE="go1.21.0.linux-amd64.tar.xz"
 ARG NODE_VERSION="v18.17.1"
 ARG NODE_DISTRO="linux-x64"
@@ -50,7 +50,7 @@ ARG NODEFILE="node-${NODE_VERSION}-${NODE_DISTRO}.tar.xz"
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config" PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages:${PYLIBS}/site-packages" GOPATH="/config/gopath"  GOPROXY="https://goproxy.cn,direct"
-# 拷贝 Python 3.11.3 环境
+# 拷贝 Python 3.11.7 环境
 COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
 # 更新 apt 并安装应用所需依赖
 RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
@@ -105,6 +105,7 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
   cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go && pip3 install ansible==5.10.0 --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/  && pip3 install ansible-lint -i https://mirrors.aliyun.com/pypi/simple/  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
 ADD ${GOFILE} /usr/local
 ADD ${NODEFILE} /usr/local/lib/nodejs
+RUN echo 'HISTSIZE=100000' >> /etc/profile
 # RUN export PATH=$PATH:/usr/local/go/bin && export GOPATH=/config/gopath
 # /usr/local/go/bin/go install golang.org/x/tools/gopls@latest && \
 # /usr/local/go/bin/go install -v golang.org/x/tools/cmd/goimports@latest && /usr/local/go/bin/go install -v github.com/stamblerre/gocode@latest && \
