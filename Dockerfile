@@ -1,6 +1,5 @@
 FROM 107255705363.dkr.ecr.cn-northwest-1.amazonaws.com.cn/linuxserver/baseimage-ubuntu:jammy AS builder
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG DEBIAN_FRONTEND="noninteractive"
 ARG BUILD_DATE
 ARG VERSION
 ARG CODE_RELEASE
@@ -101,6 +100,7 @@ RUN echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v &
   ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   # python3 -m pip install --upgrade pip && \
+  # -i https://mirrors.cloud.tencent.com/pypi/simple/
   # pip3 install -r /requirements.txt --no-cache-dir --upgrade -i https://mirrors.aliyun.com/pypi/simple/ && \
   cd /teop/teop-sdk-python && python3 setup.py install && mkdir /config/gopath /usr/local/go && pip3 install ansible==5.10.0 --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/  && pip3 install ansible-lint -i https://mirrors.aliyun.com/pypi/simple/  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
 ADD ${GOFILE} /usr/local
