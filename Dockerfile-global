@@ -39,7 +39,7 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   vim bash-completion groff less unzip rsync \
   openjdk-18-jdk-headless \
   git jq libatomic1 net-tools netcat sudo amazon-ecr-credential-helper \
-  pgloader \
+  pgloader zip \
   --no-install-recommends && \
   mkdir /config/gopath /usr/local/go /usr/local/lib/nodejs && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
