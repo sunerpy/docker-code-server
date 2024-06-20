@@ -75,7 +75,7 @@ COPY requirements.txt /
 ADD teop-sdk-python.tar.gz /teop
 RUN echo 'HISTSIZE=100000' >> /etc/profile && \
   echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-  echo "export PATH=\"${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && \
+  echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && \
   ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
   cd /teop/teop-sdk-python && python3 setup.py install && pip3 install ansible==5.10.0 ansible-core==2.12.10 ansible-lint==5.4.0  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
