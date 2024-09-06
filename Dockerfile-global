@@ -1,6 +1,6 @@
-FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy AS builder
+FROM ghcr.io/linuxserver/baseimage-ubuntu:noble AS builder
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG PYTHONNUM='3.11' PYTHONVERALL="3.11.7"
+ARG PYTHONNUM='3.12' PYTHONVERALL="3.12.3"
 ARG PYTHONVER="python-${PYTHONVERALL}" PYTHONFILENAME="Python-${PYTHONVERALL}"
 ENV LANG C.UTF-8
 # 安装依赖和编译工具
@@ -16,16 +16,17 @@ RUN echo "https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tg
   make altinstall && cd / && rm -rf /${PYTHONFILENAME} /${PYTHONFILENAME}.tgz
 
 # 第二阶段，构建 Python 应用镜像
-FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy
+FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
 ARG DEBIAN_FRONTEND="noninteractive"
 # set version label
-ARG BUILD_DATE VERSION CODE_RELEASE PYTHONNUM='3.11' PYTHONVERALL="3.11.7"
-ARG GOVERS="1.22.3" NODE_VERSION="v22.2.0" NODE_DISTRO="linux-x64" CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh" CONDA_PATH="/usr/local/miniconda3"
+ARG BUILD_DATE VERSION CODE_RELEASE PYTHONNUM='3.12' PYTHONVERALL="3.12.3"
+ARG GOVERS="1.23.0" NODE_VERSION="v22.2.0" NODE_DISTRO="linux-x64" CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh" CONDA_PATH="/usr/local/miniconda3"
 ARG PYTHONVER="python-${PYTHONVERALL}" PYTHONFILENAME="Python-${PYTHONVERALL}"  PYLIBS="/config/pylibs/python${PYTHONVERALL}"
 ARG GOFILE="go${GOVERS}.linux-amd64.tar.gz" NODEFILE="node-${NODE_VERSION}-${NODE_DISTRO}.tar.xz" 
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config" GOPATH="/config/gopath" GOPROXY="https://goproxy.cn,direct"
+ENV PATH="/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin"
 # ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages:${PYLIBS}/site-packages"
 # 拷贝 Python 环境
 COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
@@ -37,9 +38,9 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   curl libbz2-dev libreadline-dev llvm xz-utils tk-dev liblzma-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
   debian-keyring debian-archive-keyring apt-transport-https openssh-client maven krb5-config \
   vim bash-completion groff less unzip rsync \
-  openjdk-18-jdk-headless \
-  git jq libatomic1 net-tools netcat sudo amazon-ecr-credential-helper \
-  pgloader zip \
+  openjdk-21-jdk-headless \
+  git jq libatomic1 net-tools netcat-openbsd sudo amazon-ecr-credential-helper \
+  pgloader zip clang-format \
   --no-install-recommends && \
   mkdir /config/gopath /usr/local/go /usr/local/lib/nodejs && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
@@ -58,9 +59,9 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   "https://github.com/coder/code-server/releases/download/v${CODE_RELEASE}/code-server-${CODE_RELEASE}-linux-amd64.tar.gz" && \
   tar xf /tmp/code-server.tar.gz -C \
   /app/code-server --strip-components=1 && \
-  cd /tmp && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
-  cd /tmp && unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && \
-  curl -o /tmp/go.tar.gz -L "https://go.dev/dl/${GOFILE}" && tar xf go.tar.gz -C /usr/local && \
+  # cd /tmp && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
+  # cd /tmp && unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && \
+  cd /tmp && curl -o /tmp/go.tar.gz -L "https://go.dev/dl/${GOFILE}" && tar xf go.tar.gz -C /usr/local && \
   curl -o /tmp/node.tar.gz -L "https://nodejs.org/dist/${NODE_VERSION}/${NODEFILE}" && tar xf node.tar.gz -C /usr/local/lib/nodejs && \
   curl -o /tmp/miniconda.sh -L "https://repo.anaconda.com/miniconda/${CONDA_SCRIPT}" && \
   bash miniconda.sh -b -u -p ${CONDA_PATH} && \
@@ -72,14 +73,21 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   /var/lib/apt/lists/* \
   /var/tmp/* 
 COPY requirements.txt /
-ADD teop-sdk-python.tar.gz /teop
+# ADD teop-sdk-python.tar.gz /teop
 RUN echo 'HISTSIZE=100000' >> /etc/profile && \
-  echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && /sbin/ldconfig -v && \
-  echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && \
-  ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
-  ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && ln -s /usr/bin/python3 /usr/bin/python && \
-  cd /teop/teop-sdk-python && python3 setup.py install && pip3 install ansible==5.10.0 ansible-core==2.12.10 ansible-lint==5.4.0  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
-RUN ${CONDA_PATH}/bin/conda init bash
+  echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && . /etc/profile && cat /etc/profile
+RUN cat /etc/ld.so.conf
+RUN ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && echo $PATH && which pip && sleep 5
+RUN /sbin/ldconfig -v && \
+  # echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && \
+  # ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
+  # ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && \
+  # ln -s /usr/bin/python3 /usr/bin/python && \
+  pip3 install ansible==5.10.0 ansible-core==2.12.10 ansible-lint==5.4.0  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
+RUN cd /tmp && curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf > rust.sh && sh rust.sh -y && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
+  cd /tmp && unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && rm -rf /tmp/* && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
+RUN . /etc/profile && /usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin/corepack enable && ${CONDA_PATH}/bin/conda init bash
+# RUN /usr/local/lib/nodejs/node-v22.2.0-linux-x64/bin/corepack enable
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
 
