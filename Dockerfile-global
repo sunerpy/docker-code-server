@@ -27,6 +27,7 @@ LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DA
 LABEL maintainer="aptalca"
 ENV HOME="/config" GOPATH="/config/gopath" GOPROXY="https://goproxy.cn,direct"
 ENV PATH="/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin"
+ENV ZSH_CUSTOM=/config/.oh-my-zsh/custom
 # ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages:${PYLIBS}/site-packages"
 # 拷贝 Python 环境
 COPY --from=builder /usr/local/${PYTHONVER} /usr/local/${PYTHONVER}
@@ -41,6 +42,7 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   openjdk-21-jdk-headless \
   git jq libatomic1 net-tools netcat-openbsd sudo amazon-ecr-credential-helper \
   pgloader zip clang-format skopeo \
+  zsh zsh-syntax-highlighting zsh-autosuggestions fontconfig \
   --no-install-recommends && \
   mkdir /config/gopath /usr/local/go /usr/local/lib/nodejs && \
   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' |gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg &&\
@@ -72,6 +74,12 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   /tmp/* \
   /var/lib/apt/lists/* \
   /var/tmp/* 
+RUN echo "y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
+    echo 'source ~/powerlevel10k/powerlevel10k.zsh-theme' >>~/.zshrc && \
+    chsh -s /bin/zsh && fc-cache -f -v
+COPY font/* /usr/local/share/fonts/meslo/
 COPY requirements.txt /
 # ADD teop-sdk-python.tar.gz /teop
 RUN echo 'HISTSIZE=100000' >> /etc/profile && \
