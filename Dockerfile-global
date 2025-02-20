@@ -20,13 +20,13 @@ FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
 ARG DEBIAN_FRONTEND="noninteractive"
 # set version label
 ARG BUILD_DATE VERSION CODE_RELEASE PYTHONNUM='3.12' PYTHONVERALL="3.12.3"
-ARG GOVERS="1.23.1" NODE_VERSION="v22.2.0" NODE_DISTRO="linux-x64" CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh" CONDA_PATH="/usr/local/miniconda3"
+ARG GOVERS="1.23.1" CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh" CONDA_PATH="/usr/local/miniconda3"
 ARG PYTHONVER="python-${PYTHONVERALL}" PYTHONFILENAME="Python-${PYTHONVERALL}"  PYLIBS="/config/pylibs/python${PYTHONVERALL}"
-ARG GOFILE="go${GOVERS}.linux-amd64.tar.gz" NODEFILE="node-${NODE_VERSION}-${NODE_DISTRO}.tar.xz" 
+ARG GOFILE="go${GOVERS}.linux-amd64.tar.gz"
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="aptalca"
 ENV HOME="/config" GOPATH="/config/gopath" GOPROXY="https://goproxy.cn,direct"
-ENV PATH="/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin"
+ENV PATH="/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:$PATH:${PYLIBS}/site-packages/bin"
 ENV ZSH_CUSTOM=/config/.oh-my-zsh/custom
 # ENV PYTHONPATH="/usr/local/${PYTHONVER}/lib/python${PYTHONNUM}/site-packages:${PYLIBS}/site-packages"
 # 拷贝 Python 环境
@@ -64,7 +64,6 @@ RUN echo 'abc:Test12#$' |chpasswd && echo 'root:Test12#$' |chpasswd && \
   # cd /tmp && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
   # cd /tmp && unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && \
   cd /tmp && curl -o /tmp/go.tar.gz -L "https://go.dev/dl/${GOFILE}" && tar xf go.tar.gz -C /usr/local && \
-  curl -o /tmp/node.tar.gz -L "https://nodejs.org/dist/${NODE_VERSION}/${NODEFILE}" && tar xf node.tar.gz -C /usr/local/lib/nodejs && \
   curl -o /tmp/miniconda.sh -L "https://repo.anaconda.com/miniconda/${CONDA_SCRIPT}" && \
   bash miniconda.sh -b -u -p ${CONDA_PATH} && \
   echo "**** clean up ****" && \
@@ -83,18 +82,31 @@ COPY font/* /usr/local/share/fonts/meslo/
 COPY requirements.txt /
 # ADD teop-sdk-python.tar.gz /teop
 RUN echo 'HISTSIZE=100000' >> /etc/profile && \
-  echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && . /etc/profile && cat /etc/profile
+  echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:${PYLIBS}/site-packages/bin\"" >> /etc/profile && . /etc/profile && cat /etc/profile
 RUN cat /etc/ld.so.conf
 RUN ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && echo $PATH && which pip && sleep 5
 RUN /sbin/ldconfig -v && \
-  # echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:/usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin:${PYLIBS}/site-packages/bin\"" >> /etc/profile && \
   # ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   # ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && \
   # ln -s /usr/bin/python3 /usr/bin/python && \
   pip3 install ansible==5.10.0 ansible-core==2.12.10 ansible-lint==5.4.0  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
 RUN cd /tmp && curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf > rust.sh && sh rust.sh -y && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
   cd /tmp && unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && rm -rf /tmp/* && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
-RUN . /etc/profile && /usr/local/lib/nodejs/node-${NODE_VERSION}-${NODE_DISTRO}/bin/corepack enable && ${CONDA_PATH}/bin/conda init bash
+RUN . /etc/profile && ${CONDA_PATH}/bin/conda init bash
+# FNM_PATH="/config/.local/share/fnm"
+# if [ -d "$FNM_PATH" ]; then
+#   export PATH="/config/.local/share/fnm:$PATH"
+#   eval "`fnm env`"
+# fi
+ARG ASDFVER="v0.15.0"
+# git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.15.0
+# . "$HOME/.asdf/asdf.sh"
+# # append completions to fpath
+# fpath=(${ASDF_DIR}/completions $fpath)
+# # initialise completions with ZSH's compinit
+# autoload -Uz compinit && compinit
+RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch ${ASDFVER}
+RUN curl -fsSL https://fnm.vercel.app/install | bash
 # RUN /usr/local/lib/nodejs/node-v22.2.0-linux-x64/bin/corepack enable
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
