@@ -1,6 +1,6 @@
 FROM ghcr.io/linuxserver/baseimage-ubuntu:noble AS builder
 ARG DEBIAN_FRONTEND="noninteractive"
-ARG PYTHONNUM='3.12' PYTHONVERALL="3.12.3"
+ARG PYTHONNUM='3.13' PYTHONVERALL="3.13.4"
 ARG PYTHONVER="python-${PYTHONVERALL}" PYTHONFILENAME="Python-${PYTHONVERALL}"
 ENV LANG C.UTF-8
 # 安装依赖和编译工具
@@ -19,8 +19,8 @@ RUN echo "https://www.python.org/ftp/python/${PYTHONVERALL}/${PYTHONFILENAME}.tg
 FROM ghcr.io/linuxserver/baseimage-ubuntu:noble
 ARG DEBIAN_FRONTEND="noninteractive"
 # set version label
-ARG BUILD_DATE VERSION CODE_RELEASE PYTHONNUM='3.12' PYTHONVERALL="3.12.3"
-ARG GOVERS="1.23.1" CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh" CONDA_PATH="/usr/local/miniconda3"
+ARG BUILD_DATE VERSION CODE_RELEASE PYTHONNUM='3.13' PYTHONVERALL="3.13.4"
+ARG GOVERS="1.24.3" CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh" CONDA_PATH="/usr/local/miniconda3"
 ARG PYTHONVER="python-${PYTHONVERALL}" PYTHONFILENAME="Python-${PYTHONVERALL}"  PYLIBS="/config/pylibs/python${PYTHONVERALL}"
 ARG GOFILE="go${GOVERS}.linux-amd64.tar.gz"
 LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
