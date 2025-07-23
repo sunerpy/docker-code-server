@@ -85,12 +85,14 @@ RUN echo 'HISTSIZE=100000' >> /etc/profile && \
   echo "/usr/local/${PYTHONVER}/lib" >> /etc/ld.so.conf && echo "export PATH=\"/config/.local/bin:${CONDA_PATH}/bin:/usr/local/${PYTHONVER}/bin:/usr/local/go/bin:\$PATH:${PYLIBS}/site-packages/bin\"" >> /etc/profile && . /etc/profile && cat /etc/profile
 RUN cat /etc/ld.so.conf
 RUN ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && echo $PATH && which pip && sleep 5
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 RUN /sbin/ldconfig -v && \
   # ln -s /usr/local/${PYTHONVER}/bin/pip${PYTHONNUM} /usr/bin/pip3 && ln -s /usr/bin/pip3 /usr/bin/pip && \
   # ln -s /usr/local/${PYTHONVER}/bin/python${PYTHONNUM} /usr/bin/python3 && \
   # ln -s /usr/bin/python3 /usr/bin/python && \
-  pip3 install ansible==5.10.0 ansible-core==2.12.10 ansible-lint==5.4.0  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
-RUN cd /tmp && curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf > rust.sh && sh rust.sh -y && curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
+  uv pip install --system ansible==5.10.0 ansible-core==2.12.10 ansible-lint==5.4.0  --no-cache-dir && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
+# RUN cd /tmp && curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf > rust.sh && sh rust.sh -y
+RUN  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
   cd /tmp && unzip awscliv2.zip  && rm -f awscliv2.zip && ./aws/install && rm -rf /tmp/* && find /usr/local -depth \( \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \) -exec rm -rf '{}' + ;
 RUN . /etc/profile && ${CONDA_PATH}/bin/conda init bash
 # FNM_PATH="/config/.local/share/fnm"
@@ -98,18 +100,19 @@ RUN . /etc/profile && ${CONDA_PATH}/bin/conda init bash
 #   export PATH="/config/.local/share/fnm:$PATH"
 #   eval "`fnm env`"
 # fi
-ARG ASDFVER="v0.15.0"
+# ARG ASDFVER="v0.15.0"
 # git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.15.0
 # . "$HOME/.asdf/asdf.sh"
 # # append completions to fpath
 # fpath=(${ASDF_DIR}/completions $fpath)
 # # initialise completions with ZSH's compinit
 # autoload -Uz compinit && compinit
-RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch ${ASDFVER}
-RUN curl -fsSL https://fnm.vercel.app/install | bash
+# RUN git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch ${ASDFVER}
+# RUN curl -fsSL https://fnm.vercel.app/install | bash
 # RUN /usr/local/lib/nodejs/node-v22.2.0-linux-x64/bin/corepack enable
 COPY openssl.cnf  /etc/ssl/openssl.cnf
 COPY /root /
 
 # ports and volumes
 EXPOSE 8443
+
