@@ -1,0 +1,80 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-server-alb
+spec:
+  ports:
+    - port: 38443
+      targetPort: 8443
+      protocol: TCP
+      name: http
+  type: ClusterIP
+  selector:
+    app: code-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: code-server
+  name: code-server
+spec:
+  selector:
+    matchLabels:
+      app: code-server
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: code-server
+    spec:
+      serviceAccountName: dev-admin-sa
+      securityContext:
+        fsGroup: 1000
+        sysctls:
+          - name: net.ipv4.ping_group_range
+            value: "0 2147483647"
+      hostname: code-server
+      containers:
+        - name: dind
+          image: docker:26.0.1-dind
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: cache-dir
+              mountPath: /var/run
+          command:
+            - dockerd
+            - --host=unix:///var/run/docker.sock
+            - --host=tcp://0.0.0.0:8000
+        - image: sunerpy/code-server:4.102.3
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          name: code-server
+          env:
+            - name: PASSWORD
+              value: "password" # Set your own password here
+            - name: TZ
+              value: Asia/Shanghai
+            - name: DEFAULT_WORKSPACE
+              value: /config/workspace
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: VSCODE_PROXY_URI
+              value: https://xxx.xxx.top:38443/absproxy/{{port}}/ # Set your own proxy address here, but unnecessary
+          volumeMounts:
+            - mountPath: /config
+              name: dataconfig
+            - mountPath: /var/run
+              name: cache-dir # Mount docker.sock
+      volumes:
+        - name: dataconfig
+          hostPath:
+            path: /host/data/path/to/code-server # Set your own path here
+        - name: cache-dir
+          emptyDir: {}

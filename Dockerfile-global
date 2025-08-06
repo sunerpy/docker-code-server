@@ -1,0 +1,207 @@
+# =============================================================================
+# Code Server Docker 镜像构建文件
+# 基于 LinuxServer.io 的 Ubuntu Noble 基础镜像构建开发环境
+# =============================================================================
+
+# 构建参数定义
+ARG BUILD_IMAGE=ghcr.io/linuxserver/baseimage-ubuntu:noble
+
+# =============================================================================
+# 主构建阶段 - 安装所有开发工具和依赖
+# =============================================================================
+FROM ${BUILD_IMAGE} AS builder
+
+# 设置非交互式安装模式，避免安装过程中的交互提示
+ARG DEBIAN_FRONTEND="noninteractive"
+
+# 版本标签和构建信息
+ARG BUILD_DATE 
+ARG VERSION
+ARG CONDA_SCRIPT="Miniconda3-latest-Linux-x86_64.sh"
+ARG CONDA_PATH="/usr/local/miniconda3"
+
+# 镜像元数据标签
+LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="aptalca"
+
+# =============================================================================
+# 环境变量配置 - 设置开发环境所需的路径和配置
+# =============================================================================
+ENV HOME="/config" \
+  GOPATH="/config/gopath" \
+  GOPROXY="https://goproxy.cn,direct" \
+  ZSH_CUSTOM="/config/.oh-my-zsh/custom"
+
+ENV PATH="/config/.local/bin:${CONDA_PATH}/bin:$PATH"
+
+# =============================================================================
+# 系统依赖安装阶段 - 安装基础开发工具和库 可选
+# =============================================================================
+RUN echo "**** 更新包管理器并安装系统依赖 ****" && \
+  apt-get update && \
+  apt-get install -y \
+  # 基础库和运行时依赖
+  libreadline8 libncursesw6 liblzma5 libatomic1 \
+  libssl-dev libsecret-1-0 libncurses5-dev libncursesw5-dev \
+  libbz2-dev libreadline-dev libffi-dev libgdbm-dev libgdbm-compat-dev \
+  # 构建工具
+  build-essential clang-format \
+  # 系统工具 不需要可不安装
+  procps curl wget unzip rsync zip \
+  inetutils-ping telnet net-tools netcat-openbsd \
+  # 开发工具
+  git subversion openssh-client \
+  vim nano groff less \
+  # Shell 和终端增强
+  zsh zsh-syntax-highlighting zsh-autosuggestions \
+  bash-completion fontconfig \
+  # 编程语言和运行时
+  openjdk-21-jdk-headless \
+  # Python 开发依赖
+  llvm xz-utils tk-dev \
+  # 其他开发工具
+  jq maven sudo \
+  # aws容器镜像助手
+  amazon-ecr-credential-helper skopeo \
+  # 数据库工具
+  pgloader \
+  # Kerberos 配置
+  krb5-config \
+  --no-install-recommends && \
+  # 清理不需要的包
+  apt-get remove -y debian-keyring debian-archive-keyring apt-transport-https && \
+  # 配置 sudo 权限
+  sed -i '/root.*ALL/aabc ALL=(ALL:ALL) NOPASSWD: ALL' /etc/sudoers && \
+  echo "**** 系统依赖安装完成 ****"
+
+# =============================================================================
+# Code Server 安装阶段 - 下载并安装最新版本的 code-server
+# =============================================================================
+RUN echo "**** 安装 Code Server ****" && \
+  # 获取最新版本号
+  if [ -z ${CODE_RELEASE+x} ]; then \
+  CODE_RELEASE=$(curl -sX GET https://api.github.com/repos/coder/code-server/releases/latest \
+  | awk '/tag_name/{print $4;exit}' FS='[""]' | sed 's|^v||'); \
+  fi && \
+  echo "安装 Code Server 版本: ${CODE_RELEASE}" && \
+  # 创建安装目录
+  mkdir -p /app/code-server && \
+  # 下载并解压 code-server
+  curl -o /tmp/code-server.tar.gz -L \
+  "https://github.com/coder/code-server/releases/download/v${CODE_RELEASE}/code-server-${CODE_RELEASE}-linux-amd64.tar.gz" && \
+  tar xf /tmp/code-server.tar.gz -C /app/code-server --strip-components=1 && \
+  echo "**** Code Server 安装完成 ****"
+
+# =============================================================================
+# Miniconda 安装阶段 - 安装 Python 包管理器
+# =============================================================================
+RUN echo "**** 安装 Miniconda ****" && \
+  cd /tmp && \
+  curl -o /tmp/miniconda.sh -L "https://repo.anaconda.com/miniconda/${CONDA_SCRIPT}" && \
+  bash miniconda.sh -b -u -p ${CONDA_PATH} && \
+  # 初始化 conda 环境
+  ${CONDA_PATH}/bin/conda init bash && \
+  echo "**** Miniconda 安装完成 ****"
+
+# =============================================================================
+# Shell 环境配置阶段 - 安装和配置 Oh My Zsh 及主题
+# =============================================================================
+RUN echo "**** 配置 Zsh 和 Oh My Zsh ****" && \
+  # 安装 Oh My Zsh
+  echo "y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && \
+  # 安装语法高亮插件
+  git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
+  ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting && \
+  # 安装 Powerlevel10k 主题
+  git clone --depth=1 https://github.com/romkatv/powerlevel10k.git \
+  ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k && \
+  # 配置主题
+  echo 'source ~/powerlevel10k/powerlevel10k.zsh-theme' >>~/.zshrc && \
+  # 设置默认 shell
+  chsh -s /bin/zsh && \
+  # 刷新字体缓存
+  fc-cache -f -v && \
+  echo "**** Zsh 配置完成 ****"
+
+# =============================================================================
+# 字体安装阶段 - 复制 Meslo 字体文件
+# =============================================================================
+COPY font/* /usr/local/share/fonts/meslo/
+
+# =============================================================================
+# 系统配置阶段 - 配置环境变量和系统设置
+# =============================================================================
+RUN echo "**** 配置系统环境 ****" && \
+  # 设置历史记录大小
+  echo 'HISTSIZE=100000' >> /etc/profile && \
+  # 配置 PATH 环境变量
+  echo "export PATH=\"\$PATH\"" >> /etc/profile && \
+  # 应用配置
+  . /etc/profile && \
+  # 更新动态链接库缓存
+  /sbin/ldconfig -v && \
+  echo "**** 系统环境配置完成 ****"
+
+# =============================================================================
+# Python 包管理工具安装阶段 - 安装现代 Python 包管理器 uv
+# =============================================================================
+RUN echo "**** 安装 UV Python 包管理器 ****" && \
+  curl -LsSf https://astral.sh/uv/install.sh | sh && \
+  echo "**** UV 安装完成 ****"
+
+# =============================================================================
+# AWS CLI 安装阶段 - 安装 Amazon Web Services 命令行工具
+# =============================================================================
+RUN echo "**** 安装 AWS CLI v2 ****" && \
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip && \
+  cd /tmp && \
+  unzip awscliv2.zip && \
+  rm -f awscliv2.zip && \
+  ./aws/install && \
+  echo "**** AWS CLI 安装完成 ****"
+
+# =============================================================================
+# 配置文件复制阶段 - 复制自定义配置文件
+# =============================================================================
+# 复制自定义 OpenSSL 配置
+COPY openssl.cnf /etc/ssl/openssl.cnf
+
+# 复制根目录配置文件和脚本
+COPY /root /
+
+# =============================================================================
+# 最终清理阶段 - 清理临时文件和缓存
+# =============================================================================
+RUN echo "**** 执行最终清理 ****" && \
+  # 清理 APT 缓存
+  apt-get clean && \
+  # 清理临时文件和缓存
+  rm -rf \
+  /config/* \
+  /tmp/* \
+  /var/lib/apt/lists/* \
+  /var/tmp/* && \
+  # 清理 Python 缓存和测试文件
+  find /usr/local -depth \( \
+  \( -type d -a \( -name test -o -name tests -o -name idle_test \) \) -o \
+  \( -type f -a \( -name '*.pyc' -o -name '*.pyo' -o -name 'libpython*.a' \) \) \
+  \) -exec rm -rf '{}' + && \
+  echo "**** 清理完成 ****"
+
+# =============================================================================
+# 端口暴露 - 暴露 Code Server 服务端口
+# =============================================================================
+EXPOSE 8443
+
+# =============================================================================
+# 构建完成
+# 此镜像包含了完整的开发环境：
+# - Code Server (基于 VS Code 的 Web IDE)
+# - Python 开发环境 (Miniconda + uv)
+# - Java 开发环境 (OpenJDK 21)
+# - Go 开发环境支持
+# - Shell 增强 (Zsh + Oh My Zsh + Powerlevel10k)
+# - 各种开发工具和实用程序
+# - AWS CLI 和容器工具
+# 容器启动后，可使用包管理软件mise或asdf来管理不同版本的node python go rust等语言环境
+# =============================================================================

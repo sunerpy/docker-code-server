@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  dind:
+    image: docker:26.0.1-dind
+    container_name: dind
+    privileged: true
+    volumes:
+      - cache-dir:/var/run
+    command:
+      - dockerd
+      - --host=unix:///var/run/docker.sock
+      - --host=tcp://0.0.0.0:8000
+    networks:
+      - code-server-network
+
+  code-server:
+    image: sunerpy/code-server:4.102.3
+    container_name: code-server
+    privileged: true
+    depends_on:
+      - dind
+    volumes:
+      - /host/data/path/to/code-server:/config
+      - cache-dir:/var/run
+    environment:
+      - PASSWORD=password
+      - TZ=Asia/Shanghai
+      - DEFAULT_WORKSPACE=/config/workspace
+      - PUID=1000
+      - PGID=1000
+    ports:
+      - "8443:8443"
+    networks:
+      - code-server-network
+
+volumes:
+  cache-dir:
+
+networks:
+  code-server-network:
+    driver: bridge
