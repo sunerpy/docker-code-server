@@ -74,6 +74,8 @@ RUN echo "**** 更新包管理器并安装系统依赖 ****" && \
   librsvg2-dev \
   xvfb \
   clang \
+  nsis \
+  lld \
   --no-install-recommends && \
   # 清理不需要的包
   apt-get remove -y debian-keyring debian-archive-keyring apt-transport-https && \
