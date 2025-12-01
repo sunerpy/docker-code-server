@@ -8,6 +8,7 @@
 # 启动 SSH
 echo "启动 SSH 服务..."
 [ ! -f /etc/ssh/ssh_host_rsa_key ] && ssh-keygen -A
+mkdir -p /var/run/sshd /run/sshd
 /usr/sbin/sshd
 
 # 启动 xrdp-sesman
