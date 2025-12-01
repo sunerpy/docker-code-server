@@ -1,10 +1,33 @@
+ARG TAG=noble
+# 构建参数定义
+ARG BUILD_IMAGE=ghcr.io/linuxserver/baseimage-ubuntu:noble
+FROM ubuntu:$TAG AS xrdp-builder
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND="noninteractive" apt-get install -y --no-install-recommends \
+        autoconf \
+        build-essential \
+        ca-certificates \
+        dpkg-dev \
+        libpulse-dev \
+        lsb-release \
+        git \
+        libtool \
+        libltdl-dev \
+        sudo && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN git clone https://github.com/neutrinolabs/pulseaudio-module-xrdp.git /pulseaudio-module-xrdp
+WORKDIR /pulseaudio-module-xrdp
+RUN scripts/install_pulseaudio_sources_apt.sh && \
+    ./bootstrap && \
+    ./configure PULSE_DIR=$HOME/pulseaudio.src && \
+    make && \
+    make install DESTDIR=/tmp/install
 # =============================================================================
 # Code Server Docker 镜像构建文件
 # 基于 LinuxServer.io 的 Ubuntu Noble 基础镜像构建开发环境
 # =============================================================================
-
-# 构建参数定义
-ARG BUILD_IMAGE=ghcr.io/linuxserver/baseimage-ubuntu:noble
 
 # =============================================================================
 # 主构建阶段 - 安装所有开发工具和依赖
@@ -55,6 +78,10 @@ RUN echo "**** 更新包管理器并安装系统依赖 ****" && \
   # Shell 和终端增强
   zsh zsh-syntax-highlighting zsh-autosuggestions \
   bash-completion fontconfig \
+  # 中文字体支持
+  fonts-noto-cjk fonts-noto-cjk-extra fonts-wqy-microhei fonts-wqy-zenhei \
+  fonts-arphic-ukai fonts-arphic-uming \
+  locales language-pack-zh-hans \
   # 编程语言和运行时
   openjdk-21-jdk-headless \
   # Python 开发依赖
@@ -76,11 +103,15 @@ RUN echo "**** 更新包管理器并安装系统依赖 ****" && \
   clang \
   nsis \
   lld \
+  tree \
   --no-install-recommends && \
   # 清理不需要的包
   apt-get remove -y debian-keyring debian-archive-keyring apt-transport-https && \
   # 配置 sudo 权限
   sed -i '/root.*ALL/aabc ALL=(ALL:ALL) NOPASSWD: ALL' /etc/sudoers && \
+  # 配置中文 locale
+  locale-gen zh_CN.UTF-8 && \
+  update-locale LANG=zh_CN.UTF-8 && \
   echo "**** 系统依赖安装完成 ****"
 
 # =============================================================================
@@ -133,9 +164,13 @@ RUN echo "**** 配置 Zsh 和 Oh My Zsh ****" && \
   echo "**** Zsh 配置完成 ****"
 
 # =============================================================================
-# 字体安装阶段 - 复制 Meslo 字体文件
+# 字体安装阶段 - 复制 Meslo 字体文件并刷新字体缓存
 # =============================================================================
 COPY font/* /usr/local/share/fonts/meslo/
+
+RUN echo "**** 刷新字体缓存 ****" && \
+  fc-cache -f -v && \
+  echo "**** 字体缓存刷新完成 ****"
 
 # =============================================================================
 # 系统配置阶段 - 配置环境变量和系统设置
@@ -178,6 +213,90 @@ COPY openssl.cnf /etc/ssl/openssl.cnf
 # 复制根目录配置文件和脚本
 COPY /root /
 
+COPY --chmod=755 scripts/run_novnc /run_novnc
+COPY --chmod=755 scripts/start.sh /custom-services.d/start.sh
+# COPY --chmod=755 scripts/vnc-run /custom-services.d/vnc-run
+# # COPY --chmod=755 scripts/run-no-vnc /custom-services.d/run-no-vnc
+ENV USER="abc" \
+  DISPLAY=:1 \
+  LANG=zh_CN.UTF-8 \
+  LANGUAGE=zh_CN:zh:en_US:en \
+  LC_ALL=zh_CN.UTF-8 \
+  VNC_PASSWD=password \
+  VNC_PORT=5900 \
+  VNC_RESOLUTION=1200x800 \
+  VNC_COL_DEPTH=24  \
+  NOVNC_PORT=6080 \
+  VNC_HOME=/vnc \
+  NOVNC_HOME=/noVNC
+
+RUN set -xe \
+  && apt-get update && apt-get install -y \
+  # X11 和字体
+  xfonts-base xfonts-75dpi xfonts-100dpi xfonts-scalable xfonts-cyrillic \
+  # XFCE 桌面环境
+  xfce4 xfce4-goodies xfce4-terminal xfce4-pulseaudio-plugin \
+  # 辅助功能
+  at-spi2-core dbus-x11 \
+  # RDP 支持（xorgxrdp 是 xrdp 的 Xorg 后端模块）
+  xorgxrdp xrdp pavucontrol pulseaudio pulseaudio-utils \
+  # VNC 支持（可选，用于 noVNC）
+  tightvncserver x11vnc xvfb \
+  # X11 工具
+  x11-apps x11-utils x11-xserver-utils xauth \
+  # 终端和 SSH
+  xterm openssh-server \
+  --no-install-recommends \
+  && mkdir -p ${HOME}/.vnc /custom-services.d ${NOVNC_HOME} ${VNC_HOME}/x11vnc ${VNC_HOME}/vnc ${VNC_HOME}/log /var/run/sshd /run/sshd && \
+  mkdir -p ${NOVNC_HOME}/utils/websockify &&\
+  wget -qO- "https://github.com/novnc/noVNC/archive/$( \
+  curl -s https://api.github.com/repos/novnc/noVNC/releases/latest | jq -r .tag_name \
+  ).tar.gz" | tar xz --strip 1 -C ${NOVNC_HOME} \
+  && wget -qO- "https://github.com/novnc/websockify/archive/$( \
+  curl -s https://api.github.com/repos/novnc/websockify/releases/latest | jq -r .tag_name \
+  ).tar.gz" | tar xzf - --strip 1 -C ${NOVNC_HOME}/utils/websockify &&\
+  ln -s ${NOVNC_HOME}/vnc_auto.html ${NOVNC_HOME}/index.html &&\
+  chown -R ${USER}:${USER} ${NOVNC_HOME} &&\
+  chown -R ${USER}:${USER} ${VNC_HOME} && \
+  sed -i \
+  -e 's/^#\?\s*PasswordAuthentication\s\+.*/PasswordAuthentication no/' \
+  -e 's/^#\?\s*PermitRootLogin\s\+.*/PermitRootLogin no/' \
+  -e 's/^#\?\s*PubkeyAuthentication\s\+.*/PubkeyAuthentication yes/' \
+  /etc/ssh/sshd_config && \
+  sed -i 's/^#\?Port .*/Port 22/' /etc/ssh/sshd_config && \
+  chmod -x /etc/update-motd.d/* && \
+  usermod -s /bin/zsh abc
+
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg &&\
+  install -o root -g root -m 644 microsoft.gpg /usr/share/keyrings/ &&\
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" \
+  | sudo tee /etc/apt/sources.list.d/microsoft-edge.list &&\
+  apt update && apt install -y microsoft-edge-stable --no-install-recommends &&\
+  # 创建 Edge 启动包装脚本（禁用沙箱以在容器中运行）
+  printf '#!/bin/bash\nexec /usr/bin/microsoft-edge-stable --no-sandbox --disable-dev-shm-usage --disable-gpu --disable-software-rasterizer --disable-setuid-sandbox "$@"\n' > /usr/local/bin/edge-browser &&\
+  chmod +x /usr/local/bin/edge-browser &&\
+  # 设置 Edge 为默认浏览器
+  update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/local/bin/edge-browser 200 &&\
+  update-alternatives --set x-www-browser /usr/local/bin/edge-browser &&\
+  update-alternatives --install /usr/bin/gnome-www-browser gnome-www-browser /usr/local/bin/edge-browser 200 &&\
+  update-alternatives --set gnome-www-browser /usr/local/bin/edge-browser &&\
+  # 创建自定义 desktop 文件
+  mkdir -p /usr/share/applications &&\
+  printf '[Desktop Entry]\nVersion=1.0\nName=Microsoft Edge (Container)\nComment=Web Browser optimized for containers\nExec=/usr/local/bin/edge-browser %%U\nTerminal=false\nType=Application\nIcon=microsoft-edge\nCategories=Network;WebBrowser;\nMimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;\n' > /usr/share/applications/edge-browser.desktop &&\
+  # 创建 xdg-open 配置
+  mkdir -p /etc/xdg &&\
+  echo "[Default Applications]" > /etc/xdg/mimeapps.list &&\
+  echo "text/html=edge-browser.desktop" >> /etc/xdg/mimeapps.list &&\
+  echo "x-scheme-handler/http=edge-browser.desktop" >> /etc/xdg/mimeapps.list &&\
+  echo "x-scheme-handler/https=edge-browser.desktop" >> /etc/xdg/mimeapps.list &&\
+  echo "x-scheme-handler/about=edge-browser.desktop" >> /etc/xdg/mimeapps.list &&\
+  echo "x-scheme-handler/unknown=edge-browser.desktop" >> /etc/xdg/mimeapps.list &&\
+  # 设置 BROWSER 环境变量
+  echo 'export BROWSER=/usr/local/bin/edge-browser' >> /etc/profile &&\
+  echo 'export BROWSER=/usr/local/bin/edge-browser' >> /etc/bash.bashrc
+
+COPY --from=xrdp-builder /tmp/install /
+RUN sed -i 's|^Exec=.*|Exec=/usr/bin/pulseaudio|' /etc/xdg/autostart/pulseaudio-xrdp.desktop
 # =============================================================================
 # 最终清理阶段 - 清理临时文件和缓存
 # =============================================================================
@@ -200,7 +319,7 @@ RUN echo "**** 执行最终清理 ****" && \
 # =============================================================================
 # 端口暴露 - 暴露 Code Server 服务端口
 # =============================================================================
-EXPOSE 8443
+EXPOSE 8443 5901
 
 # =============================================================================
 # 构建完成

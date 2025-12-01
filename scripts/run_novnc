@@ -1,0 +1,50 @@
+#!/usr/bin/with-contenv bash
+set -xe
+source /etc/profile
+
+mkdir -p "$HOME/.x11vnc"
+PASSWD_PATH="$HOME/.x11vnc/passwd"
+x11vnc -storepasswd "$VNC_PASSWD" "$PASSWD_PATH"
+chmod 600 "$PASSWD_PATH"
+
+# 1) X 服务器：若没启动才启动
+if ! xdpyinfo -display "$DISPLAY" >/dev/null 2>&1; then
+    Xvfb "$DISPLAY" -screen 0 "${VNC_RESOLUTION}x${VNC_COL_DEPTH}" &
+fi
+
+# 2) noVNC：若 6080 没被占才启动
+if ! nc -z localhost 6080; then
+    "$NOVNC_HOME/utils/novnc_proxy" --vnc "localhost:$VNC_PORT" --listen 6080 &
+fi
+
+# 3) 桌面：若 xfce4-session 没跑才启动
+if ! pgrep -x xfce4-session >/dev/null; then
+    startxfce4 --replace > "$HOME/wm.log" 2>&1 &
+fi
+
+# 4) x11vnc：若没跑才启动
+if ! pgrep -x x11vnc >/dev/null; then
+    exec x11vnc -xkb -noxrecord -noxfixes -noxdamage -permitfiletransfer -tightfilexfer \
+           -rfbauth "$PASSWD_PATH" -display "$DISPLAY" -forever \
+           -o "$HOME/.x11vnc/x11vnc.log"
+fi
+
+
+
+
+# #!/usr/bin/with-contenv bash
+# set -xe
+
+# source /etc/profile
+
+# mkdir -p "$HOME/.x11vnc"
+# PASSWD_PATH="$HOME/.x11vnc/passwd"
+
+# x11vnc -storepasswd $VNC_PASSWD $PASSWD_PATH
+# chmod 600 $PASSWD_PATH
+
+# $NOVNC_HOME/utils/novnc_proxy --vnc localhost:$VNC_PORT --listen $NOVNC_PORT &
+# Xvfb $DISPLAY -screen 0 "$VNC_RESOLUTION"x"$VNC_COL_DEPTH" &
+# startxfce4 --replace > $HOME/wm.log 2>&1 &
+# sleep 1
+# x11vnc -xkb -noxrecord -noxfixes -noxdamage -permitfiletransfer -tightfilexfer -rfbauth $PASSWD_PATH -display $DISPLAY -forever -o $HOME/.x11vnc/x11vnc.log -bg
