@@ -244,6 +244,8 @@ RUN set -xe \
   tightvncserver x11vnc xvfb \
   # X11 工具
   x11-apps x11-utils x11-xserver-utils xauth \
+  # 音频支持
+  libasound2-dev \
   # 终端和 SSH
   xterm openssh-server \
   --no-install-recommends \
